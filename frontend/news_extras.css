@@ -1,0 +1,99 @@
+/* Feed cards.
+   The grid uses a 1px gap over a border-coloured background, so the cards read
+   as one table divided by hairlines rather than as floating tiles. Fewer
+   edges, less visual noise, and the content does the work. */
+
+.news-card {
+  background: var(--bg);
+  padding: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  transition: background .15s;
+}
+.news-card:hover { background: var(--surface); }
+
+.nc-hdr {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: .7rem;
+  color: var(--faint);
+  margin-bottom: .75rem;
+}
+.nc-source { font-weight: 500; letter-spacing: .04em; text-transform: uppercase; }
+.nc-time { font-family: var(--mono); white-space: nowrap; }
+
+.nc-title {
+  font-size: .95rem;
+  font-weight: 500;
+  line-height: 1.45;
+  margin-bottom: .5rem;
+}
+
+.nc-summary {
+  font-size: .84rem;
+  line-height: 1.65;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.nc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  flex-wrap: wrap;
+}
+.nc-tags { display: flex; gap: .3rem; flex-wrap: wrap; }
+.nc-tag {
+  font-size: .66rem;
+  letter-spacing: .04em;
+  color: var(--faint);
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+  padding: .1rem .4rem;
+}
+
+.nc-read-more {
+  font-size: .78rem;
+  color: var(--accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.nc-read-more:hover { text-decoration: underline; }
+
+/* Severity is carried on a left edge rather than a coloured badge: present
+   when it matters, invisible when it does not. */
+.news-card[data-sev="critical"] { box-shadow: inset 2px 0 0 var(--critical); }
+.news-card[data-sev="high"]     { box-shadow: inset 2px 0 0 var(--high); }
+.news-card[data-sev="medium"]   { box-shadow: inset 2px 0 0 var(--medium); }
+
+/* Skeleton while the feed loads */
+.news-skeleton { pointer-events: none; }
+.sk-line {
+  height: 9px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-sweep 1.4s infinite;
+  margin-bottom: .7rem;
+}
+.sk-short { width: 35%; }
+.sk-med   { width: 65%; }
+.sk-long  { width: 90%; }
+@keyframes skeleton-sweep { to { background-position: -200% 0; } }
+
+.news-empty, .news-error {
+  grid-column: 1 / -1;
+  background: var(--bg);
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--faint);
+  font-size: .88rem;
+}

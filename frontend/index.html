@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#000000">
+<title>ReconTitan — External Attack Surface Assessment</title>
+<meta name="description" content="Point ReconTitan at a domain you own. It enumerates subdomains, reviews TLS and headers, inspects JavaScript, matches technology versions to CVEs, and produces a report with evidence for every finding.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=2">
+</head>
+<body>
+
+
+<div class="announce">Authorized testing only — scan what you own or hold written permission to assess</div>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="/" aria-label="ReconTitan home">
+      <span class="brand-mark" aria-hidden="true"></span>
+      ReconTitan
+      <span class="version" id="versionPill">v0.5.0</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a href="#scanner" class="nav-link is-current">Scan</a>
+      <a href="#capabilities" class="nav-link">What it checks</a>
+      <a href="#news-section" class="nav-link">Feed</a>
+      <a href="/api/docs" target="_blank" rel="noopener noreferrer" class="nav-link">API</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ═════════════════════ Hero ═════════════════════ -->
+<section class="hero" aria-label="Introduction">
+  <canvas id="heroCanvas" aria-hidden="true"></canvas>
+  <div class="shell hero-shell">
+    <div class="hero-copy">
+    <p class="eyebrow" style="color:rgba(255,255,255,.55)">External attack surface assessment</p>
+    <h1>Everything A Domain Shows The Internet, <em>Written Up With The Evidence</em>.</h1>
+    <p class="hero-lede">
+      Subdomains from certificate logs. Frameworks and versions from response
+      headers. Endpoints from bundled JavaScript. Enumerated, checked against
+      known weaknesses, and reported with the proof behind every claim.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-accent" href="#scanner">Run a scan</a>
+      <a class="btn btn-ghost" href="#capabilities">What it checks</a>
+    </div>
+    </div>
+
+    <div class="hero-visual" aria-hidden="true">
+      <canvas id="globeCanvas" data-globe="dark"></canvas>
+    </div>
+
+    <dl class="hero-stats">
+      <div><dt id="moduleCount">25+</dt><dd>Checks across recon, OSINT and vulnerability phases</dd></div>
+      <div><dt>20</dt><dd>Danger Mode stages, bounded and paced</dd></div>
+      <div><dt>0</dt><dd>Findings without the evidence they came from</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- ═════════════════════ Scanner ═════════════════════ -->
+<section class="scanner" id="scanner">
+  <div class="shell">
+    <div class="scan-grid">
+
+      <div class="scan-copy">
+        <p class="eyebrow">Start here</p>
+        <h2>Run a scan</h2>
+        <p>
+          Enter a domain or IP you own. The recon and OSINT phases are passive;
+          the vulnerability phase is bounded and non-destructive.
+        </p>
+        <p class="authorization">
+          Private and non-routable addresses are refused. Danger Mode requires a
+          typed authorization before a single active probe is sent.
+        </p>
+      </div>
+
+      <div class="scan-form">
+        <div class="field">
+          <label for="targetInput">Target</label>
+          <div class="field-row">
+            <input id="targetInput" type="text" placeholder="example.com" autocomplete="off" spellcheck="false">
+            <button class="btn btn-primary" id="scanBtn" type="button">
+              <span class="btn-label">Run scan</span>
+              <span class="btn-spinner" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+        <label class="desktop-alert-toggle" for="desktopAlertsEnabled">
+          <input id="desktopAlertsEnabled" type="checkbox">
+          <span>Notify this device when a scan finds high or critical issues</span>
+        </label>
+        <p class="desktop-alert-note" id="desktopAlertNote" aria-live="polite"></p>
+
+        <fieldset class="profiles" id="profileGrid" role="radiogroup" aria-label="Scan profile">
+          <legend>Profile</legend>
+          <div class="profile-list">
+            <button class="profile active" type="button" data-profile="full" role="radio" aria-checked="true">
+              <span class="profile-name">Full</span>
+              <span class="profile-time">60–120s</span>
+              <span class="profile-desc">Recon, OSINT, and bounded vulnerability checks</span>
+            </button>
+            <button class="profile" type="button" data-profile="recon_only" role="radio" aria-checked="false">
+              <span class="profile-name">Recon</span>
+              <span class="profile-time">20–55s</span>
+              <span class="profile-desc">DNS, certificates, archives, infrastructure</span>
+            </button>
+            <button class="profile" type="button" data-profile="osint_only" role="radio" aria-checked="false">
+              <span class="profile-name">Web &amp; OSINT</span>
+              <span class="profile-time">10–25s</span>
+              <span class="profile-desc">Headers, TLS, JavaScript, takeover, fingerprints</span>
+            </button>
+            <button class="profile" type="button" data-profile="vuln_only" role="radio" aria-checked="false">
+              <span class="profile-name">Vulnerabilities</span>
+              <span class="profile-time">5–15s</span>
+              <span class="profile-desc">Exposed ports and version-matched CVE candidates</span>
+            </button>
+            <button class="profile profile-restricted" type="button" data-profile="danger" role="radio" aria-checked="false">
+              <span class="profile-name">Danger mode<span class="lock" aria-hidden="true">Locked</span></span>
+              <span class="profile-time">3–6 min</span>
+              <span class="profile-desc">Active penetration-test simulation. Requires explicit authorization.</span>
+            </button>
+          </div>
+        </fieldset>
+
+        <!-- Deliberately heavy. It is the last thing between a click and real
+             attack traffic reaching someone's server. -->
+        <section class="gate" id="dangerGate" hidden aria-labelledby="gateTitle">
+          <h2 class="gate-title" id="gateTitle">This sends real attack traffic</h2>
+          <p class="gate-lead" id="dangerGateStatus">
+            Danger mode probes for injection, fuzzes directories and traversal paths,
+            enumerates identifiers, and attempts DNS zone transfers against the target.
+          </p>
+          <dl class="gate-facts">
+            <div><dt>Never modified</dt><dd>Nothing on the target is created, changed, or deleted.</dd></div>
+            <div><dt>No credentials</dt><dd>No login is attempted against live accounts.</dd></div>
+            <div><dt>No shell</dt><dd>Command-injection vectors are reported, never connected.</dd></div>
+            <div><dt>Nothing stored</dt><dd>Secrets and object contents are fingerprinted only.</dd></div>
+            <div><dt>Needs review</dt><dd>Every result is a candidate for manual validation.</dd></div>
+            <div><dt>Time-capped</dt><dd>At the wall-clock limit, remaining stages are skipped and the report is still produced.</dd></div>
+          </dl>
+          <label class="gate-check">
+            <input type="checkbox" id="dangerConsent">
+            <span>I own this target or hold written permission to assess it, and I accept responsibility for this scan.</span>
+          </label>
+          <label class="gate-type" for="dangerPhrase">
+            <span>Type <code>I am authorized</code> to continue</span>
+            <input type="text" id="dangerPhrase" autocomplete="off" spellcheck="false" placeholder="I am authorized" aria-describedby="dangerGateFeedback">
+          </label>
+          <p class="gate-status" id="dangerGateFeedback" role="status" aria-live="polite">Danger mode is locked.</p>
+        </section>
+
+        <div class="progress" id="scanProgress" hidden>
+          <div class="progress-head">
+            <span id="progressPhase">Starting</span>
+            <div class="progress-meta">
+              <span class="progress-pct" id="progressPct">0%</span>
+              <button class="progress-cancel" id="cancelScanBtn" type="button" hidden>Cancel scan</button>
+            </div>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-log" id="progressLog" aria-live="polite"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════ Capabilities ═════════════════════ -->
+<section class="checks" id="capabilities">
+  <div class="shell">
+    <header class="section-head">
+      <p class="eyebrow">Coverage</p>
+      <h2>What a scan actually looks at</h2>
+      <p>Each check is deterministic Python. Findings carry the evidence they were derived from, and anything inferred rather than proven is labelled a candidate.</p>
+    </header>
+
+    <div class="checks-grid">
+      <article>
+        <h3>Subdomain takeover</h3>
+        <p>Resolves certificate-derived subdomains, matches dangling CNAMEs against known provider fingerprints, and reports only where NXDOMAIN or an unclaimed-resource signature confirms it.</p>
+      </article>
+      <article>
+        <h3>JavaScript inspection</h3>
+        <p>Downloads bounded same-scope assets and looks for API endpoints, risky DOM sinks, and source maps. Secrets are recorded as a short hash, never in plaintext.</p>
+      </article>
+      <article>
+        <h3>Technology and CVEs</h3>
+        <p>Identifies software from headers, markup, cookies, and asset paths, then matches versions to CVE records by CPE range rather than keyword text.</p>
+      </article>
+      <article>
+        <h3>TLS and headers</h3>
+        <p>Checks certificate validity and expiry, negotiated protocol and cipher, and the security headers a browser relies on when the server sends nothing.</p>
+      </article>
+      <article>
+        <h3>Asset correlation</h3>
+        <p>Hashes favicons three ways, including the Shodan-compatible MurmurHash3, to find related infrastructure elsewhere on the internet.</p>
+      </article>
+      <article>
+        <h3>Reporting</h3>
+        <p>Severity-ranked PDF with methodology, tool coverage, remediation, and an explicit statement of what the scan did not cover.</p>
+      </article>
+    </div>
+
+    <p class="checks-note">
+      <span id="hsScans">0</span> scans run from this browser ·
+      <a href="/api/capabilities" target="_blank" rel="noopener noreferrer">machine-readable capabilities</a>
+    </p>
+  </div>
+</section>
+
+<!-- ═════════════════════ Feed ═════════════════════ -->
+<section class="feed" id="news-section">
+  <div class="shell">
+    <header class="section-head section-head-row">
+      <div>
+        <p class="eyebrow">Intelligence</p>
+        <h2>Security feed</h2>
+      </div>
+      <div class="feed-filters">
+        <button class="ncat active" data-cat="all">All</button>
+        <button class="ncat" data-cat="threats">Threats</button>
+        <button class="ncat" data-cat="vulns">Vulnerabilities</button>
+        <button class="ncat" data-cat="osint">OSINT</button>
+        <button class="ncat" data-cat="malware">Malware</button>
+        <button class="ncat" data-cat="breaches">Breaches</button>
+      </div>
+    </header>
+    <div class="news-grid" id="newsGrid"></div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="shell footer-inner">
+    <span>ReconTitan — authorized testing only.</span>
+    <span class="footer-links">
+      <a href="https://owasp.org/www-project-top-ten/" target="_blank" rel="noopener noreferrer">OWASP Top 10</a>
+      <a href="https://github.com/D3v4nshPat3l/ReconTitan" target="_blank" rel="noopener noreferrer">Source</a>
+      <a href="/api/health">Status</a>
+    </span>
+  </div>
+</footer>
+
+<script src="globe.js?v=3" defer></script>
+<script src="scan-progress.js?v=1"></script>
+<script src="alerts.js?v=1"></script>
+<script src="dashboard.js?v=21"></script>
+</body>
+</html>

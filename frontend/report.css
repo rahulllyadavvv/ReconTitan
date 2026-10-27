@@ -1,0 +1,1373 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   ReconTitan — report styles
+
+   Shares the design system in dashboard.css: one cool accent for chrome, a
+   warm ramp reserved for severity, serif headings, sans for reading, mono
+   only for data worth copying.
+
+   A report has one job the landing page does not: it must be scannable under
+   pressure and it must not overstate. So severity is the only saturated
+   colour on the page, it appears on a left edge rather than as a filled
+   badge, and informational rows stay grey no matter how many there are. If
+   everything is coloured, nothing reads as urgent.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.findings-explorer { margin: 1.5rem; padding: 1.25rem; background: var(--surface); border: 1px solid var(--line); }
+.findings-explorer[hidden] { display: none; }
+.findings-explorer p { margin: .75rem 0; color: var(--muted); }
+.explorer-controls { display: flex; flex-wrap: wrap; gap: .75rem; align-items: end; }
+.explorer-controls label { display: grid; gap: .3rem; flex: 1 1 180px; }
+.findings-explorer input, .findings-explorer select, .findings-explorer button {
+  padding: .65rem; background: var(--surface); color: var(--text); border: 1px solid var(--line); font: inherit;
+}
+.findings-explorer input, .findings-explorer select { width: 100%; min-width: 0; }
+.findings-explorer button { cursor: pointer; text-align: left; }
+.findings-explorer button:disabled { opacity: .5; cursor: default; }
+.findings-explorer :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.findings-explorer ul { list-style: none; padding: 0; margin: .75rem 0; }
+.findings-explorer li button { width: 100%; overflow-wrap: anywhere; margin-bottom: .35rem; }
+
+:root {
+  /* Same surfaces as the rest of the site — see docs/DESIGN.md. The report
+     used to be a dark console; it is a document people read, and it now sits
+     on the same paper as the page that produced it. */
+  --bg:        #f2efe8;   /* warm paper, not glare-white */
+  --surface:   #faf8f3;   /* cards sit a shade lighter than the page */
+  --surface-2: #eae6dc;   /* insets and hover, a shade darker */
+  --line:      #d9d4c8;
+  --line-soft: #e6e1d6;
+
+  --text:  #0d0d0d;
+  --muted: #606060;
+  --faint: #979797;
+
+  /* Same accent as the rest of the site. See docs/DESIGN.md. */
+  --accent:      #ee7501;
+  --accent-dim:  #f9922f;
+  --accent-wash: rgba(238, 117, 1, .10);
+  --cyan:        #22d3ee;
+
+  /* Severity keeps its own ramp, deliberately apart from the accent: a
+     scanner cannot spend its only strong colour on decoration. These are the
+     light-surface values from DESIGN.md, all at 4.5:1 or better on paper. */
+  --critical: #b42318;
+  --high:     #d92d20;
+  --medium:   #b54708;
+  --low:      #175cd3;
+  --info:     #606060;
+  --ok:       #067647;
+
+  --serif: 'Instrument Serif', Georgia, serif;
+  --sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono:  'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* The signature of this design: nothing is rounded. */
+  --r: 0;
+}
+
+
+/* Headings take the display serif, as everywhere else on the site. The report
+   was set entirely in the body face, which made it read as a console dump
+   rather than as a document someone is meant to sit and read. */
+.wc-card-title, .modal-hdr h3, #modalTitle {
+  font-family: var(--serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg); }
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: none; }
+[hidden] { display: none !important; }
+::selection { background: var(--accent); color: var(--text); }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: var(--bg); }
+*::-webkit-scrollbar-thumb { background: var(--line); border-radius: 0; border: 2px solid var(--bg); }
+
+/* ── Expandable attack-surface tree ─────────────────────────────────── */
+
+.report-view-tabs {
+  display: flex;
+  gap: 0;
+  margin: 1.5rem 1.5rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.report-view-tabs button {
+  position: relative;
+  min-width: 150px;
+  padding: .75rem 1rem;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  color: var(--muted);
+  font-size: .8rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+.report-view-tabs button:hover { color: var(--text); background: var(--surface); }
+.report-view-tabs button[aria-selected="true"] {
+  margin-bottom: -1px;
+  border-color: var(--line);
+  border-top: 2px solid var(--accent);
+  background: var(--surface);
+  color: var(--text);
+}
+.report-view-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; z-index: 1; }
+.attack-surface-tree {
+  margin: 0 1.5rem 1.5rem;
+  padding: 1.35rem;
+  border: 1px solid var(--line);
+  border-top: 0;
+  background: var(--surface);
+}
+.surface-tree-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+.surface-tree-head h2 {
+  font-family: var(--serif);
+  font-size: clamp(1.55rem, 2.5vw, 2rem);
+  font-weight: 400;
+  line-height: 1.15;
+}
+.surface-tree-head p:not(.surface-tree-eyebrow) {
+  max-width: 720px;
+  margin-top: .35rem;
+  color: var(--muted);
+  font-size: .88rem;
+}
+.surface-tree-eyebrow {
+  margin-bottom: .25rem;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: .68rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.surface-tree-actions { display: flex; flex-shrink: 0; gap: .5rem; }
+.surface-tree-actions button {
+  padding: .5rem .75rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: .78rem;
+}
+.surface-tree-actions button:hover { border-color: var(--faint); background: var(--surface-2); color: var(--text); }
+.surface-tree-actions button:focus-visible,
+.surface-tree-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.surface-tree-summary {
+  padding: .75rem 0;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: .73rem;
+}
+.surface-tree-scroll {
+  overflow-x: hidden;
+  overflow-y: visible;
+  min-height: 340px;
+  padding: .65rem .35rem 2rem;
+}
+.surface-tree-root,
+.surface-tree-children {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.surface-tree-children {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  margin: 0 0 0 .62rem;
+  padding: .28rem 0 .15rem 1.25rem;
+  border-left: 1px solid var(--line);
+}
+.surface-tree-clip {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0);
+  transform-origin: top;
+  visibility: visible;
+  transition:
+    grid-template-rows 650ms cubic-bezier(.22, 1, .36, 1),
+    opacity 420ms ease,
+    transform 650ms cubic-bezier(.22, 1, .36, 1),
+    visibility 0s linear;
+}
+.surface-tree-clip.is-collapsed {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-.65rem);
+  visibility: hidden;
+  transition:
+    grid-template-rows 520ms cubic-bezier(.4, 0, .2, 1),
+    opacity 260ms ease,
+    transform 520ms cubic-bezier(.4, 0, .2, 1),
+    visibility 0s linear 520ms;
+}
+.surface-tree-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+.surface-tree-children > .surface-tree-node {
+  padding: .12rem 0;
+}
+.surface-tree-children > .surface-tree-node::before {
+  position: absolute;
+  top: 1.22rem;
+  left: -1.25rem;
+  width: .95rem;
+  border-top: 1px solid var(--line);
+  content: '';
+}
+.surface-tree-clip:not(.is-collapsed) > .surface-tree-children > .surface-tree-node {
+  animation: surface-tree-enter 520ms cubic-bezier(.22, 1, .36, 1) both;
+}
+.surface-tree-clip:not(.is-collapsed) > .surface-tree-children > .surface-tree-node:nth-child(2) { animation-delay: 35ms; }
+.surface-tree-clip:not(.is-collapsed) > .surface-tree-children > .surface-tree-node:nth-child(3) { animation-delay: 70ms; }
+.surface-tree-clip:not(.is-collapsed) > .surface-tree-children > .surface-tree-node:nth-child(4) { animation-delay: 105ms; }
+.surface-tree-clip:not(.is-collapsed) > .surface-tree-children > .surface-tree-node:nth-child(5) { animation-delay: 140ms; }
+@keyframes surface-tree-enter {
+  from { opacity: 0; transform: translateY(-.8rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.surface-tree-button {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .55rem;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 2.2rem;
+  padding: .3rem .5rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+.surface-tree-button:not(:disabled):hover { border-color: var(--line); background: var(--surface-2); }
+.surface-tree-button:disabled { cursor: default; opacity: 1; }
+.surface-tree-button.is-action { color: var(--low); }
+.surface-tree-button.is-action:hover .surface-tree-label { text-decoration: underline; }
+.surface-tree-marker {
+  display: inline-grid;
+  width: .85rem;
+  height: .85rem;
+  place-items: center;
+  color: var(--muted);
+}
+.surface-tree-marker::before {
+  width: .42rem;
+  height: .42rem;
+  border: 1px solid var(--faint);
+  border-radius: 50%;
+  background: var(--bg);
+  content: '';
+  transition: transform 240ms ease, background-color 240ms ease, border-color 240ms ease;
+}
+.surface-tree-button[aria-expanded] .surface-tree-marker::before {
+  width: .62rem;
+  height: .62rem;
+  border-color: var(--accent);
+}
+.surface-tree-button[aria-expanded="true"] .surface-tree-marker::before {
+  background: var(--accent);
+  transform: scale(1.12);
+}
+.surface-tree-target > .surface-tree-button {
+  padding: .55rem .7rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  background: var(--accent-wash);
+}
+.surface-tree-target > .surface-tree-button .surface-tree-label { font-size: .94rem; }
+.surface-tree-group > .surface-tree-button .surface-tree-label,
+.surface-tree-severity > .surface-tree-button .surface-tree-label { font-weight: 600; }
+.surface-tree-label {
+  overflow-wrap: anywhere;
+  font-family: var(--mono);
+  font-size: .78rem;
+}
+.surface-tree-detail {
+  grid-column: 2 / -1;
+  overflow: hidden;
+  max-width: 58rem;
+  color: var(--muted);
+  font-size: .74rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.surface-tree-badge {
+  grid-row: 1;
+  grid-column: 3;
+  justify-self: end;
+  padding: .08rem .35rem;
+  border: 1px solid currentColor;
+  font-family: var(--mono);
+  font-size: .59rem;
+  letter-spacing: .06em;
+}
+.surface-tree-badge.is-critical { color: var(--critical); }
+.surface-tree-badge.is-high { color: var(--high); }
+.surface-tree-badge.is-medium { color: var(--medium); }
+.surface-tree-badge.is-low { color: var(--low); }
+.surface-tree-badge.is-info { color: var(--info); }
+.surface-tree-more > .surface-tree-button { color: var(--faint); font-style: italic; }
+
+@media (max-width: 700px) {
+  .report-view-tabs { margin: 1rem 1rem 0; }
+  .report-view-tabs button { min-width: 0; flex: 1; }
+  .attack-surface-tree { margin: 0 1rem 1rem; padding: 1rem; }
+  .surface-tree-head { display: block; }
+  .surface-tree-actions { margin-top: .85rem; }
+  .surface-tree-scroll { margin: 0; }
+  .surface-tree-children { margin-left: .4rem; padding-left: .72rem; }
+  .surface-tree-children > .surface-tree-node::before { left: -.72rem; width: .52rem; }
+  .surface-tree-detail { white-space: normal; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface-tree-clip,
+  .surface-tree-marker::before { transition: none; }
+  .surface-tree-clip:not(.is-collapsed) > .surface-tree-children > .surface-tree-node { animation: none; }
+}
+
+/* ── Top bar ─────────────────────────────────────────────────────────── */
+
+.topbar {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0 1.75rem;
+  border-bottom: 1px solid var(--line-soft);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(11, 12, 14, .9);
+  backdrop-filter: blur(12px);
+}
+.topbar-logo { font-family: var(--serif); font-size: 1.24rem; white-space: nowrap; }
+.topbar-logo strong { font-weight: 400; }
+
+/* The target is the single most important fact on the page. */
+.topbar-target {
+  font-family: var(--mono);
+  font-size: .92rem;
+  color: var(--text);
+  margin: 0 auto;
+  padding: .3rem .8rem;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 40vw;
+}
+
+.topbar-actions { display: flex; gap: .5rem; flex-shrink: 0; }
+.tb-btn {
+  font-size: .82rem;
+  padding: .45rem .9rem;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  color: var(--muted);
+  white-space: nowrap;
+  transition: .15s;
+}
+.tb-btn:hover { color: var(--text); border-color: var(--faint); background: var(--surface); }
+.tb-btn.primary { background: var(--accent); border-color: var(--accent); color: #0d0d0d; }
+.tb-btn.primary:hover { background: var(--accent); border-color: var(--accent); }
+
+/* ── Meta bar ────────────────────────────────────────────────────────── */
+
+.metabar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .35rem 1.4rem;
+  padding: .75rem 1.75rem;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: .78rem;
+  background: var(--surface);
+}
+.meta-item { display: inline-flex; align-items: baseline; gap: .45rem; }
+.meta-lbl { color: var(--faint); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; }
+.meta-val { font-family: var(--mono); color: var(--text); }
+.meta-sep { display: none; }  /* separators are the gap's job, not a glyph's */
+
+.metabar .sev-critical .meta-val { color: var(--critical); }
+.metabar .sev-high     .meta-val { color: var(--high); }
+.metabar .sev-medium   .meta-val { color: var(--medium); }
+
+/* ── Severity summary ────────────────────────────────────────────────── */
+
+.sev-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  border-bottom: 1px solid var(--line-soft);
+}
+.sev-bar-item {
+  padding: 1.5rem 1.25rem;
+  text-align: center;
+  border-right: 1px solid var(--line-soft);
+}
+.sev-bar-item:last-child { border-right: none; }
+.sev-bar-num {
+  display: block;
+  font-family: var(--mono);
+  font-size: 2.1rem;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--text);
+}
+.sev-bar-lbl {
+  display: block;
+  margin-top: .3rem;
+  font-size: .68rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+/* A zero count is good news and must not shout. Colour is earned by a
+   non-zero value, so a clean scan reads calm instead of alarming. */
+.sev-bar-item.critical .sev-bar-num { color: var(--critical); }
+.sev-bar-item.high     .sev-bar-num { color: var(--high); }
+.sev-bar-item.medium   .sev-bar-num { color: var(--medium); }
+.sev-bar-item.low      .sev-bar-num { color: var(--low); }
+.sev-bar-item.info     .sev-bar-num { color: var(--info); }
+/* Must come last so it wins over the colours above. */
+.sev-bar-item[data-count="0"] .sev-bar-num { color: var(--faint); }
+
+/* ── AI banner ───────────────────────────────────────────────────────── */
+
+#aiBanner {
+  margin: 1.75rem;
+  padding: 1.4rem 1.6rem;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+#aiBanner h3, #aiBanner .ai-hdr {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  font-family: var(--sans);
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: .9rem;
+}
+#aiBanner p { color: var(--text); line-height: 1.7; font-size: .95rem; }
+#aiBanner ul { margin: .9rem 0 0 1.1rem; color: var(--muted); font-size: .89rem; }
+#aiBanner li { margin-bottom: .3rem; }
+
+/* ── Cards ───────────────────────────────────────────────────────────── */
+
+/*
+   report.js runs a JS masonry pass: it measures each card, packs it into the
+   shortest column, and writes position/top/left/width inline. These rules are
+   the contract that engine depends on — a plain CSS grid here silently breaks
+   it, because absolutely positioned children are laid out by their offsets,
+   not by the grid.
+
+   Two details are load-bearing:
+
+   · `position: relative` on the container. Without it the cards resolve their
+     offsets against the initial containing block instead of the grid, so they
+     land in the wrong place and pile on top of each other.
+
+   · horizontal spacing via margin, never padding. The engine derives column
+     width from `grid.clientWidth`, which *includes* padding, while absolute
+     children are positioned from the padding box. Any horizontal padding
+     therefore makes every column too wide and shifts the origin, and the
+     error compounds across columns.
+*/
+.report-grid {
+  position: relative;
+  margin: 0 1.75rem 3rem;
+  min-height: 200px;
+  transition: height .3s ease;
+}
+
+.wc-card {
+  position: absolute;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r);
+  background: var(--surface);
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity .25s ease, top .35s ease, left .35s ease, border-color .15s;
+}
+.wc-card.placed { opacity: 1; }
+.wc-card.hidden { display: none; }
+.wc-card:hover { border-color: var(--line); }
+.wc-card-head {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .9rem 1.1rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+.wc-card-title {
+  font-size: .92rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-right: auto;
+}
+.wc-card-icons { display: flex; gap: .45rem; color: var(--faint); font-size: .78rem; }
+/* These were <button>s inheriting nothing, so they arrived with the UA's grey
+   chrome. Reset to bare glyphs and give them a real focus ring: they are now
+   the only controls on a card and have to be reachable from the keyboard. */
+.wc-card-icons > * {
+  cursor: pointer;
+  transition: color .15s, transform .15s;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  line-height: 1;
+}
+.wc-card-icons > *:hover { color: var(--text); }
+.wc-card-icons > *:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wc-card-icons > *[disabled] { opacity: .4; cursor: progress; }
+.card-refresh-btn:hover { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) {
+  .wc-card-icons > * { transition: none; }
+  .card-refresh-btn:hover { transform: none; }
+}
+
+/* Refresh feedback. The card stays readable while its check re-runs -- the
+   old result is still true until the new one arrives, so it is dimmed rather
+   than blanked. */
+.wc-card.card-refreshing { opacity: .55; }
+.card-refresh-status {
+  margin: .5rem .9rem .8rem;
+  padding: .4rem .6rem;
+  font-family: var(--mono);
+  font-size: .72rem;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-left: 2px solid var(--accent);
+}
+.card-refresh-status.is-error { color: var(--high); border-left-color: var(--high); }
+.wc-card.card-refreshed { animation: cardRefreshed 1.2s ease-out; }
+@keyframes cardRefreshed {
+  from { background: var(--surface-2); }
+  to   { background: var(--surface); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wc-card.card-refreshed { animation: none; }
+}
+
+/* Section reference modal. Prose, not data -- so it gets a reading measure
+   and the body face rather than the monospace the finding modal uses. */
+.info-box { max-width: 640px; }
+.info-text {
+  margin: 0;
+  max-width: 64ch;
+  font-size: .86rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+.info-tool { font-family: var(--mono); font-size: .78rem; color: var(--muted); }
+/*
+   A cap on body height, because one card was running past 1000px — the CVE
+   list on a CDN-fronted host returns dozens of entries — and the masonry
+   packer is greedy: it cannot undo an early placement, so a single giant card
+   left one column 573px taller than its neighbour and a block of dead space
+   under the short ones. Capping the tall cards keeps the columns close to
+   level and stops any one card dominating the page.
+
+   320px was measured, not guessed: across caps of 460/400/360/320/280 the
+   column imbalance on a real 32-finding scan fell 398/337/290/238/192px.
+   320 takes most of that gain while still showing a useful amount of any
+   one list before it scrolls. Short cards never reach the cap at all, so
+   only the genuinely long lists are affected.
+*/
+.wc-card-body {
+  padding: 1.1rem;
+  font-size: .86rem;
+  max-height: 320px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.card-empty { color: var(--faint); font-size: .85rem; padding: .4rem 0; }
+
+/* ── Key/value rows ──────────────────────────────────────────────────── */
+
+.kv-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  padding: .5rem 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.kv-row:last-child { border-bottom: none; }
+.kv-key { color: var(--muted); }
+.kv-val { font-family: var(--mono); color: var(--text); text-align: right; word-break: break-word; }
+
+.check-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .5rem 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.check-row:last-child { border-bottom: none; }
+.check-label { color: var(--muted); }
+.check-pass { color: var(--ok); font-family: var(--mono); font-size: .82rem; }
+.check-warn { color: var(--medium); font-family: var(--mono); font-size: .82rem; }
+.check-fail { color: var(--high); font-family: var(--mono); font-size: .82rem; }
+
+/* ── Findings ────────────────────────────────────────────────────────── */
+/* Severity as a left edge rather than a filled pill: present where it
+   matters, and it never competes with the finding's own text. */
+
+.finding-item {
+  padding: .7rem .9rem;
+  margin-bottom: .4rem;
+  border-radius: 0;
+  background: var(--surface-2);
+  border-left: 2px solid var(--info);
+  cursor: pointer;
+  transition: background .13s;
+}
+/* A hover has to be visible without becoming a second colour scheme. This is
+   one step down the same warm ramp — enough to track which row the pointer is
+   on, not enough to fight the text sitting on it. */
+.finding-item:hover { background: var(--surface-2); border-color: var(--line); }
+.finding-item:last-child { margin-bottom: 0; }
+.finding-item-title { font-size: .88rem; color: var(--text); line-height: 1.45; }
+.finding-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: .35rem;
+  font-family: var(--mono);
+  font-size: .7rem;
+  color: var(--faint);
+}
+.finding-has-fix { color: var(--ok); }
+.threat-kev { color: var(--critical); font-weight: 700; }
+
+.exploit-priority {
+  display: inline-block;
+  margin-left: .3rem;
+  padding: .1rem .42rem;
+  border: 1px solid currentColor;
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .07em;
+  vertical-align: .08rem;
+}
+.priority-urgent { color: var(--critical); background: rgba(255, 71, 87, .08); }
+.priority-high { color: var(--high); }
+.priority-elevated { color: var(--medium); }
+.priority-standard { color: var(--ok); }
+.priority-verify { color: var(--info); }
+
+.finding-item.sev-critical, .finding-item[data-sev="critical"] { border-left-color: var(--critical); }
+.finding-item.sev-high,     .finding-item[data-sev="high"]     { border-left-color: var(--high); }
+.finding-item.sev-medium,   .finding-item[data-sev="medium"]   { border-left-color: var(--medium); }
+.finding-item[data-sev="low"]  { border-left-color: var(--low); }
+.finding-item[data-sev="info"] { border-left-color: var(--info); }
+
+.sev-pill {
+  display: inline-block;
+  padding: .1rem .45rem;
+  border: 1px solid currentColor;
+  border-radius: 0;
+  font-family: var(--mono);
+  font-size: .64rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.sev-pill.critical, .sev-pill[data-sev="critical"] { color: var(--critical); }
+.sev-pill.high,     .sev-pill[data-sev="high"]     { color: var(--high); }
+.sev-pill.medium,   .sev-pill[data-sev="medium"]   { color: var(--medium); }
+.sev-pill.low,      .sev-pill[data-sev="low"]      { color: var(--low); }
+.sev-pill.info,     .sev-pill[data-sev="info"]     { color: var(--info); }
+
+/* ── Tags, records, ports ────────────────────────────────────────────── */
+
+.tag-cloud { display: flex; flex-wrap: wrap; gap: .35rem; }
+.subdomain-tag, .owasp-badge, .record-type, .danger-banner-tag, .tool-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: .18rem .5rem;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--surface-2);
+  font-family: var(--mono);
+  font-size: .7rem;
+  color: var(--muted);
+}
+.record-type { color: var(--accent); border-color: rgba(124,133,255,.3); }
+.owasp-tested { color: var(--ok); border-color: rgba(74,222,128,.3); }
+.owasp-untested { color: var(--faint); }
+
+.inline-list { display: flex; flex-wrap: wrap; gap: .3rem; font-family: var(--mono); font-size: .76rem; }
+
+.port-table, .danger-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+.port-table td, .port-table th,
+.danger-table td, .danger-table th {
+  padding: .45rem .5rem;
+  border-bottom: 1px solid var(--line-soft);
+  text-align: left;
+}
+.port-table th, .danger-table th {
+  font-size: .68rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 500;
+}
+.port-open { color: var(--ok); font-family: var(--mono); }
+.port-danger { color: var(--high); font-family: var(--mono); }
+.port-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: .6rem; }
+.port-info-item { font-family: var(--mono); font-size: .78rem; color: var(--muted); }
+/* Prose in the ports card, for when there is no table to show and the reason
+   has to be stated instead. Measure is capped so it reads as a sentence
+   rather than a wall spanning the full card. */
+.port-note {
+  margin: .55rem 0 0;
+  max-width: 58ch;
+  font-size: .82rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.port-note.dim { color: var(--faint); font-size: .78rem; }
+
+/* ── Danger mode ─────────────────────────────────────────────────────── */
+/* The one place saturated colour is allowed on chrome: this section reports
+   traffic that was actually fired at someone's server. */
+
+.danger-banner {
+  margin: 0 1.75rem 1.25rem;
+  padding: 1.2rem 1.4rem;
+  border: 1px solid rgba(255, 143, 77, .35);
+  border-left: 2px solid var(--high);
+  border-radius: var(--r);
+  background: rgba(255, 143, 77, .05);
+}
+.danger-banner-head {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--high);
+  margin-bottom: .6rem;
+}
+.danger-banner-text { color: var(--muted); font-size: .88rem; line-height: 1.65; }
+.danger-banner-warn { color: var(--high); font-size: .84rem; margin-top: .6rem; }
+.danger-banner-stats { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .9rem; }
+.danger-note { color: var(--faint); font-size: .78rem; margin-top: .5rem; }
+.danger-validate {
+  margin-top: .6rem;
+  padding: .5rem .7rem;
+  border-left: 2px solid var(--medium);
+  background: rgba(240, 180, 41, .06);
+  color: var(--medium);
+  font-size: .8rem;
+}
+.danger-endpoints { display: flex; flex-direction: column; gap: .3rem; }
+.danger-endpoint { display: flex; gap: .5rem; align-items: baseline; font-family: var(--mono); font-size: .76rem; }
+.danger-method { color: var(--accent); flex-shrink: 0; }
+.danger-url { color: var(--muted); word-break: break-all; }
+.danger-params { color: var(--faint); }
+
+.exploited-badge {
+  display: inline-block;
+  padding: .1rem .45rem;
+  border-radius: 0;
+  background: var(--critical);
+  color: #1a0505;
+  font-family: var(--mono);
+  font-size: .64rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+}
+.exploited-item { border-left-color: var(--critical) !important; }
+.exploit-row { display: grid; grid-template-columns: 8rem 1fr; gap: .6rem; padding: .3rem 0; font-size: .8rem; }
+.exploit-key { color: var(--faint); font-family: var(--mono); font-size: .74rem; }
+.exploit-val { color: var(--text); font-family: var(--mono); word-break: break-all; }
+.exploit-note { color: var(--muted); font-size: .82rem; margin-top: .5rem; }
+
+/* ── Explanations ────────────────────────────────────────────────────── */
+
+.vuln-explain {
+  margin-top: .7rem;
+  padding: .8rem .9rem;
+  border-radius: 0;
+  background: var(--surface-2);
+  border-left: 2px solid var(--accent);
+}
+.vuln-explain-title {
+  font-size: .68rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: .45rem;
+}
+.vuln-explain-text { color: var(--muted); font-size: .85rem; line-height: 1.65; }
+.vuln-explain-ref { display: inline-block; margin-top: .5rem; color: var(--accent); font-size: .8rem; }
+.vuln-explain-ref:hover { text-decoration: underline; }
+
+/* ── Progress and states ─────────────────────────────────────────────── */
+
+.loading-state, .empty-report { padding: 5rem 1.75rem; text-align: center; }
+.loading-spinner {
+  width: 26px; height: 26px;
+  margin: 0 auto 1.2rem;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text, .empty-title { font-size: 1.05rem; color: var(--text); margin-bottom: .5rem; }
+.loading-sub, .empty-sub { color: var(--faint); font-size: .88rem; }
+.empty-icon { font-size: 2rem; margin-bottom: .8rem; opacity: .5; }
+
+.progress-wrap { max-width: 460px; margin: 1.6rem auto 0; }
+.progress-bar-outer { height: 3px; background: var(--line); border-radius: 0; overflow: hidden; }
+.progress-bar-inner { height: 100%; width: 0; background: var(--accent); transition: width .35s ease; }
+.progress-pct { margin-top: .6rem; font-family: var(--mono); font-size: .8rem; color: var(--muted); }
+.tool-pills { display: flex; flex-wrap: wrap; gap: .3rem; justify-content: center; margin-top: 1.2rem; }
+.tool-pill.done { color: var(--ok); border-color: rgba(74,222,128,.3); }
+.tool-pill.error { color: var(--danger, #ef4444); border-color: rgba(239,68,68,.3); }
+.tool-pill.skipped { opacity: .6; }
+.tool-pill.active { color: var(--accent); border-color: var(--accent-dim); }
+
+/* ── Modal ───────────────────────────────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+  background: rgba(6, 7, 10, .8);
+  backdrop-filter: blur(6px);
+}
+.modal-box {
+  width: min(760px, 100%);
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--surface);
+  box-shadow: 0 32px 90px rgba(0, 0, 0, .6);
+  overflow: hidden;
+}
+.modal-hdr {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.3rem 1.5rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+.modal-sev { flex-shrink: 0; margin-top: .2rem; }
+#modalTitle { font-size: 1.12rem; font-weight: 600; line-height: 1.4; margin-right: auto; }
+.modal-close {
+  flex-shrink: 0;
+  width: 30px; height: 30px;
+  border-radius: 0;
+  color: var(--faint);
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: .15s;
+}
+.modal-close:hover { color: var(--text); background: var(--surface-2); }
+
+.modal-body { padding: 1.4rem 1.5rem; overflow-y: auto; }
+.modal-block { margin-bottom: 1.4rem; }
+.modal-block:last-child { margin-bottom: 0; }
+.modal-lbl {
+  font-size: .66rem;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: .5rem;
+}
+.modal-desc { color: var(--muted); line-height: 1.7; font-size: .92rem; }
+.modal-evidence, .modal-rem, .modal-exploit {
+  padding: .85rem 1rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: var(--bg);
+  font-family: var(--mono);
+  font-size: .8rem;
+  line-height: 1.65;
+  color: var(--muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.modal-exploit { border-left: 2px solid var(--critical); }
+.modal-explain { color: var(--muted); font-size: .88rem; line-height: 1.7; }
+.modal-explain h4 {
+  font-family: var(--sans);
+  font-size: .66rem;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: .5rem;
+}
+.modal-cve { font-family: var(--mono); color: var(--accent); }
+.modal-cve:hover { text-decoration: underline; }
+.priority-summary { margin-bottom: .65rem; }
+.priority-reasons {
+  margin: .7rem 0 0 1.1rem;
+  color: var(--muted);
+  font-size: .8rem;
+  line-height: 1.6;
+}
+.modal-meta {
+  padding-top: 1rem;
+  border-top: 1px solid var(--line-soft);
+  font-size: .78rem;
+  color: var(--faint);
+}
+.modal-meta strong { color: var(--muted); font-weight: 500; font-family: var(--mono); }
+
+.modal-ai-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .6rem;
+  margin-top: 1.2rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--line-soft);
+}
+.modal-ai-btn {
+  padding: .5rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  color: var(--muted);
+  font-size: .84rem;
+  transition: .15s;
+}
+.modal-ai-btn:hover:not(:disabled) { color: var(--text); border-color: var(--accent-dim); background: var(--accent-wash); }
+.modal-ai-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Which model answered. A canned fallback must never look like a verdict. */
+.modal-ai-badge {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: .68rem;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.modal-ai-badge.live { color: var(--cyan); }
+
+#modalAiResult, #modalTopicResult { font-size: .88rem; line-height: 1.7; }
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .topbar { flex-wrap: wrap; height: auto; padding: .8rem 1.1rem; gap: .8rem; }
+  .topbar-target { order: 3; max-width: 100%; margin: 0; width: 100%; }
+  .report-grid { margin: 0 1.1rem 2rem; }
+  .metabar, .danger-banner, #aiBanner { padding-left: 1.1rem; padding-right: 1.1rem; }
+  .danger-banner, #aiBanner { margin-left: 1.1rem; margin-right: 1.1rem; }
+  .sev-bar-item { padding: 1.1rem .7rem; }
+  .sev-bar-num { font-size: 1.6rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+@media print {
+  .topbar-actions, .modal-overlay, .modal-ai-row { display: none !important; }
+  body { background: #fff; color: #000; }
+  .wc-card { border-color: #ccc; background: #fff; break-inside: avoid; }
+}
+
+/* ── Report masthead ──────────────────────────────────────────────────────
+   The report used to open on a meta bar, which reads as a table starting
+   mid-sentence. Naming the target in display serif, with the globe beside it,
+   gives it a first page. */
+.report-head {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 430px);
+  align-items: center;
+  gap: 48px;
+  width: min(100% - 48px, 1232px);
+  margin: 0 auto;
+  padding: 64px 0 52px;
+}
+/* A faint perspective grid behind the masthead. It gives the globe a ground
+   to sit on, so the panel reads as space rather than as a sphere floating on
+   a flat field. */
+.report-head::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 190px;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to right,
+      rgba(13,13,13,.05) 0 1px, transparent 1px 76px),
+    repeating-linear-gradient(to bottom,
+      rgba(13,13,13,.05) 0 1px, transparent 1px 34px);
+  -webkit-mask-image: linear-gradient(to top, #000, transparent);
+  mask-image: linear-gradient(to top, #000, transparent);
+}
+.report-head > * { position: relative; }
+.report-eyebrow {
+  font-size: .75rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 14px;
+}
+.report-title {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(2.75rem, 6.5vw, 4.625rem); line-height: 1.02;
+  letter-spacing: -0.02em; margin: 0;
+  overflow-wrap: anywhere;           /* long hostnames must not overflow */
+}
+.report-sub {
+  margin: 20px 0 0; max-width: min(62ch, 100%);
+  color: var(--muted); font-size: 1rem; line-height: 1.65;
+}
+
+/* Three facts about how the report was produced. Deliberately not a repeat of
+   the meta bar below, which carries the machine detail — these say how much
+   weight to put on what follows. */
+.report-facts {
+  /* Equal columns so the three read as a set rather than as three phrases of
+     whatever width their text happened to be. */
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px;
+  margin: 34px 0 0; padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+.report-facts dt {
+  font-size: .6875rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--faint);
+}
+.report-facts dd {
+  margin: 7px 0 0; font-family: var(--serif); font-size: 1.15rem;
+  color: var(--text); line-height: 1.25; max-width: 22ch;
+}
+.report-head-visual { aspect-ratio: 1; min-height: 330px; }
+#reportGlobe { width: 100%; height: 100%; }
+
+/* The globe is the first thing to go: on a report, the findings are the
+   content and the visual is the flourish. */
+@media (max-width: 900px) {
+  .report-head { grid-template-columns: 1fr; padding: 40px 0 28px; }
+  .report-head-visual { display: none; }
+}
+
+/* ── Topbar on a dark ground ──────────────────────────────────────────────
+   The bar stays black to match the site header, so its contents cannot take
+   the page's ink tokens — those are now near-black and would vanish. These
+   override the light values for the bar only. */
+.topbar { background: #000; border-bottom-color: rgba(255,255,255,.14); }
+.topbar-logo { color: #fff; }
+.topbar-target {
+  color: #fff;
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.18);
+}
+.tb-btn {
+  color: rgba(255,255,255,.75);
+  border-color: rgba(255,255,255,.28);
+  background: transparent;
+}
+.tb-btn:hover {
+  color: #fff;
+  border-color: #fff;
+  background: rgba(255,255,255,.08);
+}
+/* The primary action keeps accent-on-ink, which reads on either ground. */
+.tb-btn.primary,
+.tb-btn.primary:hover { color: #0d0d0d; }
+
+/* ── Attack paths view ──────────────────────────────────────────────────────
+   Shares the surface tree's container so the three tabs read as one object.
+   The one thing this view must never do is let severity colour drown out the
+   evidence level: a critical-toned path whose last step is "possible" is a
+   route to close, not a breach. Level is therefore a text label first, and
+   colour only reinforces it. */
+.attack-paths-view {
+  margin: 0 1.5rem 1.5rem;
+  padding: 1.35rem;
+  border: 1px solid var(--line);
+  border-top: 0;
+  background: var(--surface);
+}
+.paths-head { padding-bottom: 1rem; border-bottom: 1px solid var(--line-soft); }
+.paths-eyebrow {
+  font-family: var(--mono);
+  font-size: .68rem;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.paths-head h2 {
+  font-family: var(--serif);
+  font-size: clamp(1.55rem, 2.5vw, 2rem);
+  font-weight: 400;
+  line-height: 1.15;
+}
+.paths-intro, .paths-caution {
+  max-width: 720px;
+  margin-top: .35rem;
+  font-size: .88rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.paths-caution {
+  margin-top: .7rem;
+  padding: .55rem .75rem;
+  border-left: 2px solid var(--accent);
+  background: var(--accent-wash);
+  color: var(--text);
+}
+.paths-summary, .paths-legend {
+  margin-top: .9rem;
+  font-family: var(--mono);
+  font-size: .74rem;
+  color: var(--muted);
+}
+.paths-legend { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
+.paths-list { display: flex; flex-direction: column; gap: 1.1rem; margin-top: 1.1rem; }
+
+.attack-path { border: 1px solid var(--line); border-left: 3px solid var(--info); background: var(--bg); padding: 1rem 1.1rem; }
+.attack-path.tone-critical { border-left-color: var(--critical); }
+.attack-path.tone-high     { border-left-color: var(--high); }
+.attack-path.tone-medium   { border-left-color: var(--medium); }
+.attack-path.tone-low      { border-left-color: var(--low); }
+.attack-path.tone-info     { border-left-color: var(--ok); }
+
+.attack-path-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.attack-path-head h3 { font-family: var(--serif); font-size: 1.2rem; font-weight: 400; line-height: 1.25; }
+.attack-path-type { font-family: var(--mono); font-size: .72rem; color: var(--faint); margin-top: .2rem; }
+.attack-path-badges { display: flex; gap: .4rem; flex-wrap: wrap; }
+.path-status, .path-sev {
+  font-family: var(--mono);
+  font-size: .64rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: .2rem .45rem;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+.path-status.tone-critical { color: var(--critical); }
+.path-status.tone-high     { color: var(--high); }
+.path-status.tone-medium   { color: var(--medium); }
+.path-status.tone-low      { color: var(--low); }
+.path-status.tone-info     { color: var(--ok); }
+.path-sev.sev-critical { color: var(--critical); }
+.path-sev.sev-high     { color: var(--high); }
+.path-sev.sev-medium   { color: var(--medium); }
+.path-sev.sev-low      { color: var(--low); }
+.path-sev.sev-info     { color: var(--info); }
+.attack-path-note { margin-top: .5rem; font-size: .8rem; color: var(--muted); max-width: 70ch; }
+
+/* The chain itself. Steps are numbered because order is the information. */
+.path-steps { list-style: none; margin: .9rem 0 0; padding: 0; }
+.path-step { position: relative; display: flex; gap: .7rem; padding: .55rem 0 .55rem 0; }
+.path-step-marker {
+  flex: 0 0 1.4rem;
+  height: 1.4rem;
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-size: .68rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+}
+.path-step.level-confirmed .path-step-marker { border-color: var(--ok); color: var(--ok); }
+.path-step.level-supported .path-step-marker { border-color: var(--medium); color: var(--medium); }
+.path-step.level-possible  .path-step-marker { border-color: var(--faint); color: var(--faint); border-style: dashed; }
+.path-connector {
+  position: absolute;
+  left: .7rem;
+  top: 2rem;
+  bottom: -.55rem;
+  width: 1px;
+  background: var(--line);
+}
+.path-step.level-possible .path-connector { background: repeating-linear-gradient(to bottom, var(--line) 0 3px, transparent 3px 6px); }
+.path-step-body { min-width: 0; flex: 1; }
+.path-step-head { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.path-step-role { font-family: var(--mono); font-size: .64rem; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); }
+.path-level {
+  font-family: var(--mono);
+  font-size: .6rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: .1rem .35rem;
+  border: 1px solid currentColor;
+}
+.path-level.level-confirmed { color: var(--ok); }
+.path-level.level-supported { color: var(--medium); }
+.path-level.level-possible  { color: var(--faint); border-style: dashed; }
+.path-step-label { font-family: var(--mono); font-size: .82rem; color: var(--text); margin-top: .15rem; word-break: break-word; }
+.path-step-detail { font-size: .78rem; line-height: 1.55; color: var(--muted); margin-top: .2rem; max-width: 74ch; }
+.path-step.is-clickable { cursor: pointer; }
+.path-step.is-clickable:hover .path-step-label { color: var(--accent); }
+.path-step.is-clickable:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.attack-path-chain {
+  margin-top: .8rem;
+  padding: .45rem .65rem;
+  font-size: .78rem;
+  border-left: 2px solid var(--faint);
+  background: var(--surface-2);
+  color: var(--text);
+  max-width: 74ch;
+}
+.attack-path-chain.level-confirmed { border-left-color: var(--ok); }
+.attack-path-chain.level-supported { border-left-color: var(--medium); }
+.attack-path-chain.level-possible  { border-left-color: var(--faint); }
+
+.attack-path-block { margin-top: .8rem; }
+.attack-path-lbl {
+  font-family: var(--mono);
+  font-size: .64rem;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: .25rem;
+}
+.path-impacts { margin: 0; padding-left: 1.1rem; font-size: .8rem; line-height: 1.6; color: var(--text); }
+.path-remediation { font-size: .8rem; line-height: 1.6; color: var(--text); max-width: 74ch; }
+
+@media (max-width: 700px) {
+  .attack-paths-view { margin: 0 .75rem 1rem; padding: 1rem; }
+  .attack-path-head { flex-direction: column; gap: .5rem; }
+}
+
+/* ── Triage ─────────────────────────────────────────────────────────────────
+   Reviewing a finding, and recording what was decided.
+
+   The visual job here is the opposite of most UI: this must not feel
+   frictionless. Suppressing a finding is a claim, and the reason field, the
+   always-visible summary banner and the reveal toggle exist so that claim
+   stays attributable. Nothing in here should read as "dismiss". */
+.triage-block { border-top: 1px solid var(--line-soft); padding-top: .9rem; }
+.triage-hint {
+  margin: .3rem 0 .7rem;
+  max-width: 68ch;
+  font-size: .78rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.triage-states { display: flex; flex-wrap: wrap; gap: .4rem; }
+.triage-btn {
+  padding: .4rem .7rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: .78rem;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.triage-btn:hover { border-color: var(--faint); color: var(--text); }
+.triage-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.triage-btn.is-selected { border-color: var(--accent); color: var(--text); background: var(--accent-wash); }
+/* The two that hide something are marked as such even before selection. */
+.triage-btn[data-triage-state="false_positive"].is-selected,
+.triage-btn[data-triage-state="accepted_risk"].is-selected { border-color: var(--medium); }
+
+.triage-reason-label { display: block; margin-top: .7rem; }
+.triage-reason-label > span { display: block; font-size: .76rem; color: var(--muted); margin-bottom: .25rem; }
+.triage-reason-label em { color: var(--medium); font-style: normal; }
+.triage-reason-label textarea {
+  width: 100%;
+  padding: .5rem .6rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: .82rem;
+  resize: vertical;
+}
+.triage-reason-label textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.triage-actions { display: flex; align-items: center; gap: .7rem; margin-top: .7rem; flex-wrap: wrap; }
+.triage-status { font-size: .76rem; color: var(--muted); }
+.triage-status.is-error { color: var(--high); }
+.triage-status.is-ok { color: var(--ok); }
+.triage-current {
+  margin-top: .5rem;
+  font-size: .76rem;
+  line-height: 1.5;
+  color: var(--faint);
+  max-width: 68ch;
+}
+
+/* The banner. Present whenever anything is suppressed or confirmed, so a
+   quiet report always says why it is quiet. */
+.triage-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 1rem 1.5rem 0;
+  padding: .7rem .9rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--medium);
+  background: var(--surface);
+}
+.triage-summary-text { font-size: .82rem; line-height: 1.55; color: var(--text); max-width: 88ch; }
+.triage-summary-text strong { font-weight: 600; }
+.triage-summary-text span { color: var(--muted); }
+
+/* A suppressed finding is hidden from the default view but never removed.
+   Revealed, it is dimmed and struck rather than restyled as normal, so it
+   cannot be mistaken for something still counted. */
+body.has-suppressed .is-suppressed { display: none; }
+body.show-suppressed .is-suppressed { display: revert; opacity: .55; }
+body.show-suppressed .is-suppressed .finding-title,
+body.show-suppressed .is-suppressed .kv-key { text-decoration: line-through; }
+
+@media (max-width: 700px) {
+  .triage-summary { margin: 1rem .75rem 0; }
+  .triage-states { gap: .3rem; }
+  .triage-btn { flex: 1 1 auto; }
+}

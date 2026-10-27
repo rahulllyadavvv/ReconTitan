@@ -1,0 +1,407 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   ReconTitan — interface styles
+
+   Design notes, so future edits keep the intent:
+
+   · One accent colour (indigo), used for interactive state and nothing else.
+     Severity colours are semantic and must stay visually separate from it,
+     which is why the accent is cool and the severity ramp is warm.
+   · Serif for headings, sans for reading, mono only for data the user might
+     copy — hostnames, versions, evidence. Monospace body text reads as a
+     terminal pastiche rather than a product.
+   · Effects are rationed. One surface elevation, one border weight, no glow.
+     Depth comes from spacing and contrast, not from shadow stacking.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Surfaces — warm-neutral rather than blue-black, so the accent reads cool */
+  --bg:        #0b0c0e;
+  --surface:   #131418;
+  --surface-2: #1a1c21;
+  --line:      #26282f;
+  --line-soft: #1d1f25;
+
+  --text:  #e9e9ec;
+  --muted: #9a9daa;
+  --faint: #6b6e7b;
+
+  --accent:      #7c85ff;
+  --accent-dim:  #5a63d6;
+  --accent-wash: rgba(124, 133, 255, .10);
+
+  /* Semantic only. Never used for chrome. */
+  --critical: #ff5c5c;
+  --high:     #ff8f4d;
+  --medium:   #f0b429;
+  --low:      #63b3ed;
+  --ok:       #4ade80;
+
+  --serif: 'Instrument Serif', Georgia, serif;
+  --sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono:  'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --shell: 1180px;
+  --r: 10px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; background: var(--bg); }
+
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: none; }
+[hidden] { display: none !important; }
+::selection { background: var(--accent); color: #fff; }
+
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: var(--bg); }
+*::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; border: 2px solid var(--bg); }
+
+.shell { width: 100%; max-width: var(--shell); margin: 0 auto; padding: 0 2rem; }
+
+/* ── Top bar ─────────────────────────────────────────────────────────── */
+
+.topbar {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  padding: 0 2rem;
+  border-bottom: 1px solid var(--line-soft);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(11, 12, 14, .85);
+  backdrop-filter: blur(12px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  font-family: var(--serif);
+  font-size: 1.28rem;
+  letter-spacing: .01em;
+}
+.brand-mark {
+  width: 9px; height: 9px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.version {
+  font-family: var(--mono);
+  font-size: .68rem;
+  color: var(--faint);
+  padding-top: .2rem;
+}
+
+.nav { display: flex; gap: 1.75rem; margin-left: auto; }
+.nav-link {
+  font-size: .85rem;
+  color: var(--muted);
+  padding: .3rem 0;
+  border-bottom: 1px solid transparent;
+  transition: color .15s, border-color .15s;
+}
+.nav-link:hover { color: var(--text); }
+.nav-link.is-current { color: var(--text); border-bottom-color: var(--accent); }
+
+/* ── Hero ────────────────────────────────────────────────────────────── */
+
+.hero { padding: 5rem 0; border-bottom: 1px solid var(--line-soft); }
+.hero-h {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2.2rem, 3.6vw, 3rem);
+  line-height: 1.08;
+  letter-spacing: -.015em;
+  margin-bottom: 1.4rem;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 5rem;
+  align-items: start;
+}
+
+.hero-copy h1 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 4.4vw, 3.9rem);
+  line-height: 1.08;
+  letter-spacing: -.015em;
+  margin-bottom: 1.6rem;
+}
+
+.lede { color: var(--muted); font-size: 1rem; line-height: 1.75; max-width: 46ch; }
+
+.authorization {
+  margin-top: 1.75rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--line-soft);
+  color: var(--faint);
+  font-size: .85rem;
+  max-width: 46ch;
+}
+
+/* ── Form ────────────────────────────────────────────────────────────── */
+
+.hero-form {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 1.75rem;
+}
+
+.field label,
+.profiles legend {
+  display: block;
+  font-size: .72rem;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: .7rem;
+}
+
+.field-row { display: flex; gap: .6rem; }
+
+#targetInput {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: .95rem;
+  padding: .8rem .95rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  transition: border-color .15s;
+}
+#targetInput::placeholder { color: var(--faint); }
+#targetInput:focus { outline: none; border-color: var(--accent); }
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  padding: .8rem 1.5rem;
+  font-size: .9rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent-dim);
+  border-radius: 7px;
+  white-space: nowrap;
+  transition: background .15s;
+}
+.btn-primary:hover:not(:disabled) { background: var(--accent); }
+.btn-primary:disabled { opacity: .55; cursor: not-allowed; }
+
+/* dashboard.js toggles .loading and .danger-armed on the button, and sets
+   data-state on the gate status line. Those hooks are the contract; keep the
+   names even if the styling changes. */
+.btn-spinner { display: none; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+.btn-primary.loading .btn-spinner { display: block; }
+.btn-primary.loading { pointer-events: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Armed danger scan: the button stops looking like every other button, so a
+   destructive run is never one absent-minded click away from a routine one. */
+.btn-primary.danger-armed { background: var(--high); color: #1a0f06; font-weight: 600; }
+.btn-primary.danger-armed:hover:not(:disabled) { background: #ffa063; }
+
+.desktop-alert-toggle { display: flex; gap: .55rem; align-items: center; margin-top: .75rem; color: var(--muted); font-size: .78rem; cursor: pointer; }
+.desktop-alert-toggle input { accent-color: var(--accent); width: 15px; height: 15px; }
+.desktop-alert-note { min-height: 1.15rem; margin: .25rem 0 0 1.75rem; color: var(--faint); font-size: .73rem; }
+
+/* ── Profiles ────────────────────────────────────────────────────────── */
+
+.profiles { border: none; margin-top: 1.9rem; }
+
+.profile {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: .1rem 1rem;
+  width: 100%;
+  text-align: left;
+  padding: .85rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  transition: background .13s, border-color .13s;
+}
+.profile + .profile { margin-top: .2rem; }
+.profile:hover { background: var(--surface-2); }
+.profile.active { background: var(--accent-wash); border-color: var(--accent-dim); }
+
+.profile-name { font-size: .92rem; font-weight: 500; display: flex; align-items: center; gap: .55rem; }
+.profile-desc { grid-column: 1; color: var(--muted); font-size: .8rem; line-height: 1.5; }
+.profile-time {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+  font-family: var(--mono);
+  font-size: .74rem;
+  color: var(--faint);
+}
+
+.profile-restricted .profile-name { color: var(--high); }
+.profile-restricted.active { background: rgba(255, 143, 77, .09); border-color: rgba(255, 143, 77, .4); }
+.lock {
+  font-family: var(--sans);
+  font-size: .63rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--faint);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: .06rem .35rem;
+}
+.profile-restricted.active .lock { color: var(--high); border-color: rgba(255,143,77,.4); }
+
+/* ── Danger gate ─────────────────────────────────────────────────────── */
+
+.gate {
+  margin-top: 1.4rem;
+  padding: 1.4rem;
+  border: 1px solid rgba(255, 143, 77, .32);
+  border-radius: 8px;
+  background: rgba(255, 143, 77, .045);
+}
+.gate-title { font-family: var(--sans); font-size: .95rem; font-weight: 600; color: var(--high); margin-bottom: .6rem; }
+.gate-lead { font-size: .85rem; color: var(--muted); line-height: 1.65; }
+
+.gate-facts { margin: 1.15rem 0; display: grid; gap: .55rem; }
+.gate-facts > div { display: grid; grid-template-columns: 8.5rem 1fr; gap: 1rem; font-size: .8rem; }
+.gate-facts dt { color: var(--text); font-weight: 500; }
+.gate-facts dd { color: var(--muted); }
+
+.gate-check { display: flex; gap: .65rem; align-items: flex-start; font-size: .82rem; line-height: 1.55; color: var(--muted); cursor: pointer; }
+.gate-check input { margin-top: .25rem; accent-color: var(--high); width: 15px; height: 15px; flex-shrink: 0; }
+
+.gate-type { display: block; margin-top: 1rem; font-size: .82rem; color: var(--muted); }
+.gate-type code { font-family: var(--mono); font-size: .8rem; color: var(--text); background: var(--surface-2); padding: .1rem .35rem; border-radius: 3px; }
+#dangerPhrase {
+  display: block;
+  width: 100%;
+  margin-top: .55rem;
+  font-family: var(--mono);
+  font-size: .88rem;
+  padding: .6rem .8rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+#dangerPhrase:focus { outline: none; border-color: var(--high); }
+
+.gate-status { margin-top: .8rem; font-size: .78rem; color: var(--faint); }
+.gate-status[data-state="ready"] { color: var(--ok); }
+.gate-status[data-state="locked"] { color: var(--high); }
+
+/* ── Progress ────────────────────────────────────────────────────────── */
+
+.progress { margin-top: 1.5rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
+.progress-head { display: flex; justify-content: space-between; font-size: .82rem; margin-bottom: .6rem; }
+.progress-pct { font-family: var(--mono); color: var(--muted); }
+.progress-track { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; width: 0; background: var(--accent); transition: width .35s ease; }
+.progress-log {
+  margin-top: .85rem;
+  max-height: 130px;
+  overflow-y: auto;
+  font-family: var(--mono);
+  font-size: .74rem;
+  line-height: 1.75;
+  color: var(--faint);
+}
+
+/* ── Sections ────────────────────────────────────────────────────────── */
+
+.checks, .feed { padding: 5.5rem 0; border-bottom: 1px solid var(--line-soft); }
+
+.section-head { max-width: 60ch; margin-bottom: 3rem; }
+.section-head h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 2.1rem;
+  letter-spacing: -.01em;
+  margin-bottom: .8rem;
+}
+.section-head p { color: var(--muted); font-size: .93rem; line-height: 1.7; }
+
+.section-head-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; max-width: none; }
+
+.checks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 2.5rem 3rem;
+}
+.checks-grid h3 { font-size: .95rem; font-weight: 600; margin-bottom: .55rem; }
+.checks-grid p { color: var(--muted); font-size: .88rem; line-height: 1.7; }
+
+.checks-note {
+  margin-top: 3.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line-soft);
+  font-size: .82rem;
+  color: var(--faint);
+}
+.checks-note span { font-family: var(--mono); color: var(--muted); }
+.checks-note a { color: var(--accent); }
+.checks-note a:hover { text-decoration: underline; }
+
+/* ── Feed ────────────────────────────────────────────────────────────── */
+
+.feed-filters { display: flex; flex-wrap: wrap; gap: .35rem; }
+.ncat {
+  font-size: .78rem;
+  color: var(--muted);
+  padding: .35rem .8rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  transition: .13s;
+}
+.ncat:hover { color: var(--text); border-color: var(--faint); }
+.ncat.active { color: var(--text); background: var(--surface-2); border-color: var(--accent-dim); }
+
+.news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1px; background: var(--line-soft); border: 1px solid var(--line-soft); border-radius: var(--r); overflow: hidden; }
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+
+.footer { padding: 2.5rem 0; }
+.footer-inner { display: flex; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; font-size: .82rem; color: var(--faint); }
+.footer-links { display: flex; gap: 1.5rem; }
+.footer-links a:hover { color: var(--text); }
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+
+@media (max-width: 940px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 3rem; }
+  .hero { padding: 3.5rem 0; }
+  .nav { gap: 1.1rem; }
+  .nav-link:nth-child(2) { display: none; }
+  .section-head-row { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 560px) {
+  .shell { padding: 0 1.25rem; }
+  .topbar { padding: 0 1.25rem; gap: 1rem; }
+  .field-row { flex-direction: column; }
+  .btn-primary { justify-content: center; }
+  .gate-facts > div { grid-template-columns: 1fr; gap: .1rem; }
+  .hero-form { padding: 1.25rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  html { scroll-behavior: auto; }
+}

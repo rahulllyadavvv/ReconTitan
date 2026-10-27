@@ -1,0 +1,91 @@
+# ══════════════════════════════════════════
+# ReconTitan — .gitignore
+# ══════════════════════════════════════════
+
+# Python
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+venv/
+.venv/
+env/
+
+# Environment
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite3
+
+# Scan artifacts (can be large)
+scan_output/
+temp_scans/
+
+# Node (if frontend ever uses npm)
+node_modules/
+package-lock.json
+
+# Misc
+*.bak
+*.tmp
+project_plan.txt
+Online*.pdf
+
+# Study guides (local only)
+Day1_*.html
+Day1_*.pdf
+ReconTitan_*.html
+ReconTitan_*.pdf
+Mastery_*.html
+*.pdf
+
+# Stage artwork masters. The WebP conversions are what the page loads and are
+# committed; the source PNGs are 8.4 MB for the same six images and would
+# dominate the repository for no benefit. Keep them locally for re-encoding.
+frontend/assets/*.png
+
+# Generated credentials. They currently live outside the repository, but a
+# stray copy inside it must never become a commit.
+generated_secrets.txt
+admin_token.txt
+*_token.txt
+
+# Local editor/agent tooling. The UI/UX skill is 3.6MB of vendored
+# third-party data, not part of ReconTitan — install it per machine.
+.claude/skills/
+
+# Raw nmap artifacts from NMAP_OUTPUT_DIR (-oA writes .nmap/.gnmap/.xml).
+# These hold full scan output for someone else's infrastructure plus local
+# filesystem paths, and with a broad --script selector they can also capture
+# the scanning machine's own network. Never commit them.
+scans/
+
+# Triage decisions. Holds target hostnames and whatever reviewers wrote about
+# them, which is operational data about somebody's infrastructure.
+triage.json
